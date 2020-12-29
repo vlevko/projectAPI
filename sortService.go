@@ -5,7 +5,7 @@ func (p byName) Len() int {
 }
 
 func (p byName) Less(i, j int) bool {
-	return p[i].name < p[j].name
+	return p[i].Name < p[j].Name
 }
 
 func (p byName) Swap(i, j int) {

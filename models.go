@@ -1,24 +1,25 @@
 package main
 
-type app struct {
-	projects []project
+// App struct
+type App struct {
+	Projects []project
 }
 
 type project struct {
-	name        string
-	description string
-	columns     []column
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Columns     []column `json:"columns"`
 }
 
 type column struct {
-	name  string
-	tasks []task
+	Name  string `json:"name"`
+	Tasks []task `json:"tasks"`
 }
 
 type task struct {
-	name        string
-	description string
-	comments    []string
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Comments    []string `json:"comments"`
 }
 
 type byName []project
