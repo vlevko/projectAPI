@@ -1,0 +1,5 @@
+DROP FUNCTION IF EXISTS delete_column(integer);
+DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS tasks;
+DROP TABLE IF EXISTS columns;
+DROP TABLE IF EXISTS projects;
