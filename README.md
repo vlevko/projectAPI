@@ -4,6 +4,7 @@ Project management REST API
 ## Prerequisites
 * PostgreSQL 12.4 running on `localhost:5432`, or using Docker `docker run -e POSTGRES_HOST_AUTH_METHOD=trust -it -p 5432:5432 -d postgres`
 * DB connection set to environment variable `DATABASE_URL`, default is `postgres://postgres:@localhost:5432/postgres?sslmode=disable`
+* Listening port set to environment variable `PORT`, default is `8000`
 * Go 1.15.6
 
 ## Getting started
