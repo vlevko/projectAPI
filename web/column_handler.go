@@ -36,6 +36,11 @@ func (h *Handler) ColumnsList(w http.ResponseWriter, r *http.Request) {
 // ColumnsCreate function creates and returns a new project column or an error message
 func (h *Handler) ColumnsCreate(w http.ResponseWriter, r *http.Request) {
 	var c models.Column
+	if r.Body == nil {
+		errorResponse(w, http.StatusBadRequest, badRequestError)
+		log.Println(badRequestError)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&c); err != nil {
 		errorResponse(w, http.StatusBadRequest, badRequestError)
@@ -83,6 +88,11 @@ func (h *Handler) ColumnsRead(w http.ResponseWriter, r *http.Request) {
 // ColumnsUpdate function updates and returns a project column or an error message
 func (h *Handler) ColumnsUpdate(w http.ResponseWriter, r *http.Request) {
 	var c models.Column
+	if r.Body == nil {
+		errorResponse(w, http.StatusBadRequest, badRequestError)
+		log.Println(badRequestError)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&c); err != nil {
 		errorResponse(w, http.StatusBadRequest, badRequestError)

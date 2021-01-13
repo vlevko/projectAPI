@@ -28,7 +28,9 @@ func GetHandler() *Handler {
 		Store: postgres.NewStore(),
 	}
 
-	h.Use(middleware.Logger, middleware.CleanPath)
+	h.Use(
+		// middleware.Logger,
+		middleware.CleanPath)
 
 	h.Route("/projects", func(r chi.Router) {
 		r.Get("/", h.ProjectsList)
@@ -46,7 +48,7 @@ func GetHandler() *Handler {
 		r.Get("/{id:[0-9]+}", h.ColumnsRead)
 		r.Put("/{id:[0-9]+}", h.ColumnsUpdate)
 		r.Delete("/{id:[0-9]+}", h.ColumnsDelete)
-		r.Get("/{id:[0-9]+}/{position:[0-9]+}", h.ColumnsPosition)
+		r.Put("/{id:[0-9]+}/{position:[0-9]+}", h.ColumnsPosition)
 
 		r.Get("/{id:[0-9]+}/tasks", h.ColumnTasksList)
 		r.Post("/{id:[0-9]+}/tasks", h.TasksCreate)
@@ -56,8 +58,8 @@ func GetHandler() *Handler {
 		r.Get("/{id:[0-9]+}", h.TasksRead)
 		r.Put("/{id:[0-9]+}", h.TasksUpdate)
 		r.Delete("/{id:[0-9]+}", h.TasksDelete)
-		r.Get("/{id:[0-9]+}/{position:[0-9]+}", h.TasksPosition)
-		r.Get("/{id:[0-9]+}/columns/{columnID:[0-9]+}", h.TasksStatus)
+		r.Put("/{id:[0-9]+}/{position:[0-9]+}", h.TasksPosition)
+		r.Put("/{id:[0-9]+}/columns/{columnID:[0-9]+}", h.TasksStatus)
 
 		r.Get("/{id:[0-9]+}/comments", h.CommentsList)
 		r.Post("/{id:[0-9]+}/comments", h.CommentsCreate)

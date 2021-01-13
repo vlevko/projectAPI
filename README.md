@@ -13,7 +13,7 @@ Project management REST API
 $ go build ./cmd/projectAPI
 $ ./projectAPI --help
 $ ./projectAPI -u
-$ go test ./cmd/projectAPI
+$ go test ./web
 $ ./projectAPI
 $ ./projectAPI -d
 ```

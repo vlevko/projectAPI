@@ -25,6 +25,11 @@ func (h *Handler) ProjectsList(w http.ResponseWriter, r *http.Request) {
 // ProjectsCreate function creates and returns a new project with default column or an error message
 func (h *Handler) ProjectsCreate(w http.ResponseWriter, r *http.Request) {
 	var p models.Project
+	if r.Body == nil {
+		errorResponse(w, http.StatusBadRequest, badRequestError)
+		log.Println(badRequestError)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&p); err != nil {
 		errorResponse(w, http.StatusBadRequest, badRequestError)
@@ -65,6 +70,11 @@ func (h *Handler) ProjectsRead(w http.ResponseWriter, r *http.Request) {
 // ProjectsUpdate function updates and returns a project or an error message
 func (h *Handler) ProjectsUpdate(w http.ResponseWriter, r *http.Request) {
 	var p models.Project
+	if r.Body == nil {
+		errorResponse(w, http.StatusBadRequest, badRequestError)
+		log.Println(badRequestError)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&p); err != nil {
 		errorResponse(w, http.StatusBadRequest, badRequestError)

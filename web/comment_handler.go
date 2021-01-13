@@ -31,6 +31,11 @@ func (h *Handler) CommentsList(w http.ResponseWriter, r *http.Request) {
 // CommentsCreate function creates and returns a new task comment or an error message
 func (h *Handler) CommentsCreate(w http.ResponseWriter, r *http.Request) {
 	var c models.Comment
+	if r.Body == nil {
+		errorResponse(w, http.StatusBadRequest, badRequestError)
+		log.Println(badRequestError)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&c); err != nil {
 		errorResponse(w, http.StatusBadRequest, badRequestError)
@@ -78,6 +83,11 @@ func (h *Handler) CommentsRead(w http.ResponseWriter, r *http.Request) {
 // CommentsUpdate function updates and returns a task comment or an error message
 func (h *Handler) CommentsUpdate(w http.ResponseWriter, r *http.Request) {
 	var c models.Comment
+	if r.Body == nil {
+		errorResponse(w, http.StatusBadRequest, badRequestError)
+		log.Println(badRequestError)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&c); err != nil {
 		errorResponse(w, http.StatusBadRequest, badRequestError)

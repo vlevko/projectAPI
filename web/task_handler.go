@@ -48,6 +48,11 @@ func (h *Handler) ColumnTasksList(w http.ResponseWriter, r *http.Request) {
 // TasksCreate function creates and returns a new column task or an error message
 func (h *Handler) TasksCreate(w http.ResponseWriter, r *http.Request) {
 	var t models.Task
+	if r.Body == nil {
+		errorResponse(w, http.StatusBadRequest, badRequestError)
+		log.Println(badRequestError)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&t); err != nil {
 		errorResponse(w, http.StatusBadRequest, badRequestError)
@@ -95,6 +100,11 @@ func (h *Handler) TasksRead(w http.ResponseWriter, r *http.Request) {
 // TasksUpdate function updates and returns a column task or an error message
 func (h *Handler) TasksUpdate(w http.ResponseWriter, r *http.Request) {
 	var t models.Task
+	if r.Body == nil {
+		errorResponse(w, http.StatusBadRequest, badRequestError)
+		log.Println(badRequestError)
+		return
+	}
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&t); err != nil {
 		errorResponse(w, http.StatusBadRequest, badRequestError)
