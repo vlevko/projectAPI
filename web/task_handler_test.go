@@ -4,29 +4,20 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
 func TestProjectTasksList(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("GET", "/projects/99999999999999999999/tasks", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("GET", "/projects/99999999999999999999/tasks", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
+	createTestProject()
+	createTestDefaultColumn()
 
-	r, _ = http.NewRequest("GET", "/projects/1/tasks", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
+	w = testRequest("GET", "/projects/1/tasks", nil)
+	checkResponseCode(http.StatusOK, w.Code, t)
 	if body := w.Body.String(); body != "[]" {
 		t.Errorf("Expected an empty array '[]'. Got '%s'\n", body)
 	}
@@ -35,22 +26,14 @@ func TestProjectTasksList(t *testing.T) {
 func TestColumnTasksList(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("GET", "/columns/99999999999999999999/tasks", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("GET", "/columns/99999999999999999999/tasks", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
+	createTestProject()
+	createTestDefaultColumn()
 
-	r, _ = http.NewRequest("GET", "/columns/1/tasks", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
+	w = testRequest("GET", "/columns/1/tasks", nil)
+	checkResponseCode(http.StatusOK, w.Code, t)
 	if body := w.Body.String(); body != "[]" {
 		t.Errorf("Expected an empty array '[]'. Got '%s'\n", body)
 	}
@@ -59,40 +42,23 @@ func TestColumnTasksList(t *testing.T) {
 func TestTasksCreate(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("POST", "/columns/1/tasks", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("POST", "/columns/1/tasks", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
 	jsonStr := []byte(`{"name":"New",}`)
-	r, _ = http.NewRequest("POST", "/columns/1/tasks", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("POST", "/columns/1/tasks", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
 	jsonStr = []byte(`{"name":"New"}`)
-	r, _ = http.NewRequest("POST", "/columns/99999999999999999999/tasks", bytes.NewBuffer(jsonStr))
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("POST", "/columns/99999999999999999999/tasks", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
+	createTestProject()
+	createTestDefaultColumn()
 
 	jsonStr = []byte(`{"name":"New"}`)
-	r, _ = http.NewRequest("POST", "/columns/1/tasks", bytes.NewBuffer(jsonStr))
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusCreated != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusCreated, w.Code)
-	}
+	w = testRequest("POST", "/columns/1/tasks", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusCreated, w.Code, t)
 
 	var m map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &m)
@@ -116,185 +82,120 @@ func TestTasksCreate(t *testing.T) {
 func TestTasksRead(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("GET", "/tasks/99999999999999999999", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("GET", "/tasks/99999999999999999999", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	r, _ = http.NewRequest("GET", "/tasks/2", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusNotFound != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusNotFound, w.Code)
-	}
+	w = testRequest("GET", "/tasks/2", nil)
+	checkResponseCode(http.StatusNotFound, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO tasks(name, description, position, column_id) VALUES('New', '', 1, 1)`)
+	createTestProject()
+	createTestDefaultColumn()
+	createTestNewTask()
 
-	r, _ = http.NewRequest("GET", "/tasks/1", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
+	w = testRequest("GET", "/tasks/1", nil)
+	checkResponseCode(http.StatusOK, w.Code, t)
 }
 
 func TestTasksUpdate(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("PUT", "/tasks/1", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("PUT", "/tasks/1", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
 	jsonStr := []byte(`{"name":"Update",}`)
-	r, _ = http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
 	jsonStr = []byte(`{"name":"Update"}`)
-	r, _ = http.NewRequest("PUT", "/tasks/99999999999999999999", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("PUT", "/tasks/99999999999999999999", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
 	jsonStr = []byte(`{"name":"Update"}`)
-	r, _ = http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusNotFound != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusNotFound, w.Code)
-	}
+	w = testRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusNotFound, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO tasks(name, description, position, column_id) VALUES('New', '', 1, 1)`)
+	createTestProject()
+	createTestDefaultColumn()
+	createTestNewTask()
 
 	jsonStr = []byte(`{"name":"Update"}`)
-	r, _ = http.NewRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
+	w = testRequest("PUT", "/tasks/1", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusOK, w.Code, t)
 }
 
 func TestTasksDelete(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("DELETE", "/tasks/99999999999999999999", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("DELETE", "/tasks/99999999999999999999", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO tasks(name, description, position, column_id) VALUES('New', '', 1, 1)`)
+	createTestProject()
+	createTestDefaultColumn()
+	createTestNewTask()
 
-	r, _ = http.NewRequest("DELETE", "/tasks/1", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
+	w = testRequest("DELETE", "/tasks/1", nil)
+	checkResponseCode(http.StatusOK, w.Code, t)
 }
 
 func TestTasksPosition(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("PUT", "/tasks/99999999999999999999/2", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("PUT", "/tasks/99999999999999999999/2", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	r, _ = http.NewRequest("PUT", "/tasks/1/99999999999999999999", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("PUT", "/tasks/1/99999999999999999999", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	r, _ = http.NewRequest("PUT", "/tasks/1/2", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusNotFound != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusNotFound, w.Code)
-	}
+	w = testRequest("PUT", "/tasks/1/2", nil)
+	checkResponseCode(http.StatusNotFound, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO tasks(name, description, position, column_id) VALUES('New', '', 1, 1)`)
+	createTestProject()
+	createTestDefaultColumn()
+	createTestNewTask()
 	h.Store.ProjectStore.DB.Exec(`INSERT INTO tasks(name, description, position, column_id) VALUES('New', '', 2, 1)`)
 
-	r, _ = http.NewRequest("PUT", "/tasks/1/2", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
+	w = testRequest("PUT", "/tasks/1/2", nil)
+	checkResponseCode(http.StatusOK, w.Code, t)
+
+	w = testRequest("GET", "/columns/1/tasks", nil)
+	var m []map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &m)
+	if m[0]["id"] != 2.0 {
+		t.Errorf("Expected first task id to be '2'. Got '%d'\n", m[0]["id"])
+	}
+	if m[1]["id"] != 1.0 {
+		t.Errorf("Expected second task id to be '1'. Got '%d'\n", m[0]["id"])
 	}
 }
 
 func TestTasksStatus(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("PUT", "/tasks/99999999999999999999/columns/2", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("PUT", "/tasks/99999999999999999999/columns/2", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	r, _ = http.NewRequest("PUT", "/tasks/1/columns/99999999999999999999", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("PUT", "/tasks/1/columns/99999999999999999999", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	r, _ = http.NewRequest("PUT", "/tasks/1/columns/2", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusNotFound != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusNotFound, w.Code)
-	}
+	w = testRequest("PUT", "/tasks/1/columns/2", nil)
+	checkResponseCode(http.StatusNotFound, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(name, position, project_id) VALUES('New', 2, 1)`)
+	createTestProject()
+	createTestDefaultColumn()
+	createTestNewColumn()
+	createTestNewTask()
+
+	w = testRequest("PUT", "/tasks/1/columns/2", nil)
+	checkResponseCode(http.StatusOK, w.Code, t)
+
+	w = testRequest("GET", "/tasks/1", nil)
+	var m map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &m)
+	if m["columnID"] != 2.0 {
+		t.Errorf("Expected task column id to be '2'. Got '%d'\n", m["columnID"])
+	}
+}
+
+func createTestNewTask() {
 	h.Store.ProjectStore.DB.Exec(`INSERT INTO tasks(name, description, position, column_id) VALUES('New', '', 1, 1)`)
-
-	r, _ = http.NewRequest("PUT", "/tasks/1/columns/2", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
 }

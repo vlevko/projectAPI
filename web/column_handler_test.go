@@ -4,39 +4,23 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 )
 
 func TestColumnsList(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("GET", "/projects/99999999999999999999/columns", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("GET", "/projects/99999999999999999999/columns", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	r, _ = http.NewRequest("GET", "/projects/1/columns", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
+	w = testRequest("GET", "/projects/1/columns", nil)
+	checkResponseCode(http.StatusNotFound, w.Code, t)
 
-	if http.StatusNotFound != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusNotFound, w.Code)
-	}
+	createTestProject()
+	createTestDefaultColumn()
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
-
-	r, _ = http.NewRequest("GET", "/projects/1/columns", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
-
+	w = testRequest("GET", "/projects/1/columns", nil)
+	checkResponseCode(http.StatusOK, w.Code, t)
 	if body := w.Body.String(); body != `[{"id":1,"name":"ToDo","position":1,"projectID":1}]` {
 		t.Errorf(`Expected an empty array '[{"id":1,"name":"ToDo","position":1,"projectID":1}]'. Got '%s'\n`, body)
 	}
@@ -45,50 +29,27 @@ func TestColumnsList(t *testing.T) {
 func TestColumnsCreate(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("POST", "/projects/1/columns", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("POST", "/projects/1/columns", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
 	jsonStr := []byte(`{"name":"New",}`)
-	r, _ = http.NewRequest("POST", "/projects/1/columns", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("POST", "/projects/1/columns", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
 	jsonStr = []byte(`{"name":"New"}`)
-	r, _ = http.NewRequest("POST", "/projects/99999999999999999999/columns", bytes.NewBuffer(jsonStr))
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("POST", "/projects/99999999999999999999/columns", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
+	createTestProject()
+	createTestDefaultColumn()
 
 	jsonStr = []byte(`{"name":"ToDo"}`)
-	r, _ = http.NewRequest("POST", "/projects/1/columns", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusInternalServerError != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusInternalServerError, w.Code)
-	}
+	w = testRequest("POST", "/projects/1/columns", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusInternalServerError, w.Code, t)
 
 	jsonStr = []byte(`{"name":"New"}`)
-	r, _ = http.NewRequest("POST", "/projects/1/columns", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusCreated != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusCreated, w.Code)
-	}
+	w = testRequest("POST", "/projects/1/columns", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusCreated, w.Code, t)
 
 	var m map[string]interface{}
 	json.Unmarshal(w.Body.Bytes(), &m)
@@ -109,164 +70,105 @@ func TestColumnsCreate(t *testing.T) {
 func TestColumnsRead(t *testing.T) {
 	clearDB()
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
+	createTestProject()
+	createTestDefaultColumn()
 
-	r, _ := http.NewRequest("GET", "/columns/99999999999999999999", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("GET", "/columns/99999999999999999999", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	r, _ = http.NewRequest("GET", "/columns/2", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusNotFound != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusNotFound, w.Code)
-	}
+	w = testRequest("GET", "/columns/2", nil)
+	checkResponseCode(http.StatusNotFound, w.Code, t)
 
-	r, _ = http.NewRequest("GET", "/columns/1", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
+	w = testRequest("GET", "/columns/1", nil)
+	checkResponseCode(http.StatusOK, w.Code, t)
 }
 
 func TestColumnsUpdate(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("PUT", "/columns/1", nil)
-	r.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("PUT", "/columns/1", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
 	jsonStr := []byte(`{"name":"Update",}`)
-	r, _ = http.NewRequest("PUT", "/columns/1", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("PUT", "/columns/1", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
 	jsonStr = []byte(`{"name":"Update"}`)
-	r, _ = http.NewRequest("PUT", "/columns/99999999999999999999", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("PUT", "/columns/99999999999999999999", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
 	jsonStr = []byte(`{"name":"Update"}`)
-	r, _ = http.NewRequest("PUT", "/columns/1", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusNotFound != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusNotFound, w.Code)
-	}
+	w = testRequest("PUT", "/columns/1", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusNotFound, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(name, position, project_id) VALUES('New', 2, 1)`)
+	createTestProject()
+	createTestDefaultColumn()
+	createTestNewColumn()
 
 	jsonStr = []byte(`{"name":"ToDo"}`)
-	r, _ = http.NewRequest("PUT", "/columns/2", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusInternalServerError != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusInternalServerError, w.Code)
-	}
+	w = testRequest("PUT", "/columns/2", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusInternalServerError, w.Code, t)
 
 	jsonStr = []byte(`{"name":"Update"}`)
-	r, _ = http.NewRequest("PUT", "/columns/2", bytes.NewBuffer(jsonStr))
-	r.Header.Set("Content-Type", "application/json")
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
+	w = testRequest("PUT", "/columns/2", bytes.NewBuffer(jsonStr))
+	checkResponseCode(http.StatusOK, w.Code, t)
 }
 
 func TestColumnsDelete(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("DELETE", "/columns/99999999999999999999", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("DELETE", "/columns/99999999999999999999", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	r, _ = http.NewRequest("DELETE", "/columns/1", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
+	w = testRequest("DELETE", "/columns/1", nil)
+	checkResponseCode(http.StatusNotFound, w.Code, t)
 
-	if http.StatusNotFound != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusNotFound, w.Code)
-	}
+	createTestProject()
+	createTestDefaultColumn()
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
+	w = testRequest("DELETE", "/columns/1", nil)
+	checkResponseCode(http.StatusNotFound, w.Code, t)
 
-	r, _ = http.NewRequest("DELETE", "/columns/1", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
+	createTestNewColumn()
 
-	if http.StatusNotFound != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusNotFound, w.Code)
-	}
-
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(name, position, project_id) VALUES('New', 2, 1)`)
-
-	r, _ = http.NewRequest("DELETE", "/columns/1", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
+	w = testRequest("DELETE", "/columns/1", nil)
+	checkResponseCode(http.StatusOK, w.Code, t)
 }
 
 func TestColumnsPosition(t *testing.T) {
 	clearDB()
 
-	r, _ := http.NewRequest("PUT", "/columns/99999999999999999999/2", nil)
-	w := httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w := testRequest("PUT", "/columns/99999999999999999999/2", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	r, _ = http.NewRequest("PUT", "/columns/1/99999999999999999999", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusBadRequest != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusBadRequest, w.Code)
-	}
+	w = testRequest("PUT", "/columns/1/99999999999999999999", nil)
+	checkResponseCode(http.StatusBadRequest, w.Code, t)
 
-	r, _ = http.NewRequest("PUT", "/columns/1/2", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusNotFound != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusNotFound, w.Code)
-	}
+	w = testRequest("PUT", "/columns/1/2", nil)
+	checkResponseCode(http.StatusNotFound, w.Code, t)
 
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO projects(name, description) VALUES('Project', 'No. 1')`)
+	createTestProject()
+	createTestDefaultColumn()
+	createTestNewColumn()
+
+	w = testRequest("PUT", "/columns/1/2", nil)
+	checkResponseCode(http.StatusOK, w.Code, t)
+
+	w = testRequest("GET", "/projects/1/columns", nil)
+	var m []map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &m)
+	if m[0]["id"] != 2.0 {
+		t.Errorf("Expected first column id to be '2'. Got '%d'\n", m[0]["id"])
+	}
+	if m[1]["id"] != 1.0 {
+		t.Errorf("Expected second column id to be '1'. Got '%d'\n", m[0]["id"])
+	}
+}
+
+func createTestDefaultColumn() {
 	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(project_id) VALUES(1)`)
-	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(name, position, project_id) VALUES('New', 2, 1)`)
+}
 
-	r, _ = http.NewRequest("PUT", "/columns/1/2", nil)
-	w = httptest.NewRecorder()
-	h.ServeHTTP(w, r)
-	if http.StatusOK != w.Code {
-		t.Errorf("Expected response code '%d'. Got '%d'\n", http.StatusOK, w.Code)
-	}
+func createTestNewColumn() {
+	h.Store.ProjectStore.DB.Exec(`INSERT INTO columns(name, position, project_id) VALUES('New', 2, 1)`)
 }
