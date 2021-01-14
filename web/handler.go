@@ -29,7 +29,7 @@ func GetHandler() *Handler {
 	}
 
 	h.Use(
-		// middleware.Logger,
+		middleware.Logger,
 		middleware.CleanPath)
 
 	h.Route("/projects", func(r chi.Router) {
