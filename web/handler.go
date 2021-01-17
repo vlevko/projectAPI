@@ -16,7 +16,7 @@ type Handler struct {
 	Store *postgres.Store
 }
 
-// GetPort function returns a listining port from the environment variable or default one
+// GetPort function returns a listening port from the environment variable or default one
 func GetPort() string {
 	return ":" + postgres.GetEnv("PORT", port)
 }

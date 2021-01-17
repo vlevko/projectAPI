@@ -18,3 +18,28 @@ $ ./projectAPI
 $ ./projectAPI -d
 ```
 * Visit the [link](https://hidden-mountain-18927.herokuapp.com/)
+
+## Endpoints
+* Listening routes and implemented methods where {id} and {position} are integer numbers
+
+  GET:
+  - /projects/{id}/tasks
+  
+  GET, POST:
+  - /projects
+  - /projects/{id}/columns
+  - /columns/{id}/tasks
+  - /tasks/{id}/comments
+  
+  GET, PUT, DELETE:
+  - /projects/{id} 
+  - /columns/{id}
+  - /tasks/{id}
+  - /comments/{id}
+
+  PUT:
+  - /columns/{id}/{position}
+  - /tasks/{id}/{position}
+  - /tasks/{id}/columns/{id}
+
+* Returning HTTP codes: 200, 201, 400, 404, 405, 500
